@@ -24,17 +24,31 @@ This is used in the demonstration of development of Ansible Playbooks.
     
     apt-get install -y mysql-server mysql-client
 
-- Add test data if required
-
 ## 3. Start Database Service
+  - Start the database service
     
-    service mysql start
+        service mysql start
+
+  - Create database and database users
+        
+        # mysql -u <username> -p
+        
+        mysql> CREATE DATABASE employee_db;
+        mysql> CREATE USER 'db_user'@'localhost' IDENTIFIED BY 'Passw0rd';
+        mysql> GRANT ALL ON employee_db.* TO 'db_user'@'localhost';
+        mysql> USE employee_db;
+        mysql> CREATE TABLE employees (name VARCHAR(20));
+        
+  - Insert some test data
+        
+        mysql> INSERT INTO employees VALUES ('JOHN');
     
 ## 4. Install and Configure Web Server
 
 Install Python Flash dependency
 
     pip install flask
+    pip install flask-mysql
 
 - Copy app.py or download it from source repository
 - Configure database credentials and parameters 
