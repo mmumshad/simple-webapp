@@ -44,7 +44,7 @@ This is used in the demonstration of development of Ansible Playbooks.
     
 ## 4. Install and Configure Web Server
 
-Install Python Flash dependency
+Install Python Flask dependency
 
     pip install flask
     pip install flask-mysql
