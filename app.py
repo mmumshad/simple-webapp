@@ -1,42 +1,55 @@
 import os
-from flask import Flask
-from flaskext.mysql import MySQL      # For newer versions of flask-mysql 
-# from flask.ext.mysql import MySQL   # For older versions of flask-mysql
+from flask import Flask, jsonify
+from flaskext.mysql import MySQL
+
 app = Flask(__name__)
 
+# Initialize MySQL
 mysql = MySQL()
 
-mysql_database_host = 'MYSQL_DATABASE_HOST' in os.environ and os.environ['MYSQL_DATABASE_HOST'] or  'localhost'
+# Get database credentials from environment variables or use defaults
+mysql_database_host = os.environ.get('MYSQL_DATABASE_HOST', 'localhost')
+mysql_database_user = os.environ.get('MYSQL_DATABASE_USER', 'db_user')
+mysql_database_password = os.environ.get('MYSQL_DATABASE_PASSWORD', 'Passw0rd')
+mysql_database_db = os.environ.get('MYSQL_DATABASE_DB', 'employee_db')
 
 # MySQL configurations
-app.config['MYSQL_DATABASE_USER'] = 'db_user'
-app.config['MYSQL_DATABASE_PASSWORD'] = 'Passw0rd'
-app.config['MYSQL_DATABASE_DB'] = 'employee_db'
+app.config['MYSQL_DATABASE_USER'] = mysql_database_user
+app.config['MYSQL_DATABASE_PASSWORD'] = mysql_database_password
+app.config['MYSQL_DATABASE_DB'] = mysql_database_db
 app.config['MYSQL_DATABASE_HOST'] = mysql_database_host
+
 mysql.init_app(app)
 
-conn = mysql.connect()
-
-cursor = conn.cursor()
-
 @app.route("/")
-def main():
-    return "Welcome!"
+def index():
+    return "Welcome to the Employee Management System!"
 
-@app.route('/how are you')
-def hello():
-    return 'I am good, how about you?'
+@app.route('/health')
+def health_check():
+    try:
+        conn = mysql.connect()
+        conn.ping(reconnect=True)  # Check if connection is alive and reconnect if not
+        return jsonify(status="ok"), 200
+    except Exception as e:
+        return jsonify(error=str(e)), 500
+    finally:
+        conn.close()
 
-@app.route('/read from database')
-def read():
-    cursor.execute("SELECT * FROM employees")
-    row = cursor.fetchone()
-    result = []
-    while row is not None:
-      result.append(row[0])
-      row = cursor.fetchone()
-
-    return ",".join(result)
+@app.route('/employees', methods=['GET'])
+def get_employees():
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM employees")
+        rows = cursor.fetchall()
+        employees = [{'id': row[0], 'name': row[1], 'position': row[2]} for row in rows]
+        return jsonify(employees), 200
+    except Exception as e:
+        return jsonify(error=str(e)), 500
+    finally:
+        cursor.close()
+        conn.close()
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
